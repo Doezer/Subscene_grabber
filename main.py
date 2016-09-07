@@ -49,13 +49,18 @@ class Subscene():
         # Or 0 if no subtitle
         print "2. We want to get the subtitle list off the website."
         the_page = self.opensubscene(showname)
-        print the_page
+        #print the_page
         tree = html.fromstring(the_page)
+        sub_list_names = tree.xpath('//div[@id="content"]/div[2]/div/div/table/tbody/tr/td/a/span[2]/text()')
+        sub_list_links = tree.xpath('//div[@id="content"]/div[2]/div/div/table/tbody/tr/td/a/@href')
+        print sub_list_names
+        del sub_list_links[1::2]
+        print sub_list_links
 
-        sub = tree.xpath('//div[@id="content"]/div[2]/div/div/table/tbody/tr/td/a/span[2]/text()')
+        sub_list = {sub_list_names: sub_list_links}
+        print sub_list
 
-        #//div[@id='content']/div[2]/div/div/table/tbody/tr/td/a/span[2]
-        print sub
+        return
 
     def getfilename(self, path):
 
