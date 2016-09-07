@@ -71,6 +71,10 @@ class Subscene():
     def getsubtitlefile(self, subtitleURL):
 
         print "this function should get the first subtitle"
+		# go on link
+		# click button at xpath: id=downloadButton
+		# retrieve zip file
+		# extract sub
 
         return 0
 
