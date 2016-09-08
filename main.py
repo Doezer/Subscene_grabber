@@ -1,8 +1,8 @@
-'''
+"""
 Created on 7/9/16
 @author: Vincent AIRIAU
 Version V0.1
-'''
+"""
 
 import os
 import shutil
@@ -15,7 +15,7 @@ import requests
 from lxml import html
 
 
-class Subscene():
+class Subscene:
     def __init__(self, path):
         print "This is the path entered: " + path
         # Retrieve filename (for example TV.SHOW.XViD-EVO), so remove path and extension
@@ -26,20 +26,19 @@ class Subscene():
         # Retrieve corresponding subtitles list on subscene
         sublist = self.getsubtitlelist(showname)
         # If no subtitles, display a NOK message
-        if sublist == []:
+        if not sublist:
             print "No subtitles are available for this release."
         # If subtitles are present, download and unpack the first one
         else:
             self.getsubtitlefile(sublist[0], zipfile_path)
-            with ZipFile(zipfile_path, 'w') as subtitle_zipfile:
-                print subtitle_zipfile.printdir()
+            print zipfile_path
+            with ZipFile(zipfile_path, 'r') as subtitle_zipfile:
                 print "extraction"
                 subtitle_zipfile.extractall(path=localpath)
-
+            os.rename(localpath + "\\" + subtitle_zipfile.namelist()[0], localpath + "\\" + showname + ".srt")
 
     def opensubscene_rls_page(self, showname):
-        # Gets the search page content for one show or whatever the file of the name is
-
+        # Gets the search page content for one show or whatever the file of the name is=
         url = 'https://subscene.com/subtitles/release'
         values = {'q': showname, 'l': ''}
         cookiefilter = '__cfduid=d9867ef87b10f433cd70a0efb36c01d471473252835; _ga=GA1.2.1129327024.1473252838; LanguageFilter=13; HearingImpaired=0; ForeignOnly=False; __gads=ID=a9b6ddb36e78eb76:T=1473252861:S=ALNI_MYgAIy-JwZk3SaXGDbgRdjR6545wQ; _gat=1'
@@ -49,7 +48,6 @@ class Subscene():
         req = urllib2.Request(url, data, headers)
         response = urllib2.urlopen(req)
         content = response.read()
-
         return content
 
     def getsubtitlelist(self, showname):
@@ -57,7 +55,7 @@ class Subscene():
         # Or 0 if no subtitle
 
         tree = html.fromstring(self.opensubscene_rls_page(showname))
-        #sub_list_names = tree.xpath('//div[@id="content"]/div[2]/div/div/table/tbody/tr/td/a/span[2]/text()')
+        # sub_list_names = tree.xpath('//div[@id="content"]/div[2]/div/div/table/tbody/tr/td/a/span[2]/text()')
 
         sub_list_links = tree.xpath('//div[@id="content"]/div[2]/div/div/table/tbody/tr/td/a/@href')
         del sub_list_links[1::2]
@@ -81,7 +79,7 @@ class Subscene():
         r = requests.get(subtitle_link, stream=True, headers={'User-Agent': user_agent})
         if r.status_code == 200:
             with open(localpath, 'wb') as f:
-                #r.raw.decode_content = True
+                # r.raw.decode_content = True
                 shutil.copyfileobj(r.raw, f)
                 f.close()
                 print "archive enregistree"
@@ -89,8 +87,5 @@ class Subscene():
             print "Subtitle couldn't be downloaded."
             return 1
         return 0
-
-
-
 
 Subscene(str(sys.argv[1]))
