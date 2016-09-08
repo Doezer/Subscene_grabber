@@ -27,7 +27,7 @@ class Subscene():
         sublist = self.getsubtitlelist(showname)
         # If no subtitles, display a NOK message
         if sublist == []:
-            print "NO SUBTITLES"
+            print "No subtitles are available for this release."
         # If subtitles are present, download and unpack the first one
         else:
             self.getsubtitlefile(sublist[0], zipfile_path)
@@ -81,8 +81,9 @@ class Subscene():
         r = requests.get(subtitle_link, stream=True, headers={'User-Agent': user_agent})
         if r.status_code == 200:
             with open(localpath, 'wb') as f:
-                r.raw.decode_content = True
+                #r.raw.decode_content = True
                 shutil.copyfileobj(r.raw, f)
+                f.close()
                 print "archive enregistree"
         else:
             print "Subtitle couldn't be downloaded."
