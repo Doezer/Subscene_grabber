@@ -1,0 +1,10 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_CLASSES_ROOT\VLC.avi\shell\FindSubtitles]
+@=”Trouver les sous-titres”
+[HKEY_CLASSES_ROOT\VLC.avi\shell\FindSubtitles\command]
+@=”python "G:\\Prog\\Git\\trunk\\main.py" %1”
+[HKEY_CLASSES_ROOT\VLC.mkv\shell\FindSubtitles]
+@=”Trouver les sous-titres”
+[HKEY_CLASSES_ROOT\VLC.mkv\shell\FindSubtitles\command]
+@=”python "G:\\Prog\\Git\\trunk\\main.py" %1”
