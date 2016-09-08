@@ -17,15 +17,17 @@ class Subscene():
         # Retrieve filename (for example TV.SHOW.XViD-EVO), so remove path and extension
         showname = self.getfilename(path)
         # Retrieve corresponding subtitles list on subscene
-
         # If no subtitles, display a NOK message
-        if self.getsubtitlelist(showname) == 0:
+        sublist = self.getsubtitlelist(showname)
+        if sublist == []:
             print "NO SUBTITLES"
         # If subtitles are present, download and unpack the first one
+        else:
+            self.getsubtitlefile(sublist[0])
 
-        return
+        return 0
 
-    def opensubscene(self, showname):
+    def opensubscene_rls(self, showname):
         # Gets the search page content for one show or whatever the file of the name is
 
         showname = 'Brooklyn.Nine-Nine.S03E03.HDTV.x264-FLEET.avi'
@@ -57,8 +59,8 @@ class Subscene():
         del sub_list_links[1::2]
         print sub_list_links
 
-        sub_list = {sub_list_names: sub_list_links}
-        print sub_list
+        #sub_list = {sub_list_names: sub_list_links}
+        #print sub_list
 
         return
 
@@ -72,6 +74,17 @@ class Subscene():
 
         print "this function should get the first subtitle"
 		# go on link
+
+        url = 'https://subscene.com/subtitles/release'
+        values = {'q': showname, 'l': ''}
+        host = "subscene.com"
+        cookiefilter = '__cfduid=d9867ef87b10f433cd70a0efb36c01d471473252835; _ga=GA1.2.1129327024.1473252838; LanguageFilter=13; HearingImpaired=0; ForeignOnly=False; __gads=ID=a9b6ddb36e78eb76:T=1473252861:S=ALNI_MYgAIy-JwZk3SaXGDbgRdjR6545wQ; _gat=1'
+        user_agent = "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:47.0) Gecko/20100101 Firefox/47.0"
+        # headers = {'User-Agent': user_agent, 'Cookie': cookiefilter, "Host": "subscene.com", "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8", "Accept-Language": "fr,fr-FR;q=0.8,en-US;q=0.5,en;q=0.3", "Accept-Encoding": "gzip, deflate, br", "Referer": "https://u.subscene.com/filter?returnUrl=pm_O4prxOi6sDoEIFIf0e-c_hf7BgALPxPlMl83JgUgH2x4_0nME8hrOLeQRGPHNoPnMRmuwIFTU_zvlYXkoPJdrEKiFYLXf8rghOK4vrBEuesta_7MQanKOsolNpje89RpHlI47RplfH-Bv52bHH4vzeFI93Ibtm2oYU3obywLWqFkmYMpohpw5XjHRTrNP0", "Connection": "keep-alive"}
+        headers = {'User-Agent': user_agent, 'Cookie': cookiefilter}
+        data = urllib.urlencode(values)
+        req = urllib2.Request(url, data, headers)
+        response = urllib2.urlopen(req)
 		# click button at xpath: id=downloadButton
 		# retrieve zip file
 		# extract sub
