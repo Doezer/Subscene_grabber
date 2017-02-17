@@ -55,14 +55,15 @@ class Subscene:
         else:
             self.getsubtitlefile(sublist, self.zipfile_path)
             # print self.zipfile_path
+            if os.path.exists(self.strDestSubPath):
+                os.remove(self.strDestSubPath)
             with ZipFile(self.zipfile_path, 'r') as subtitle_zipfile:
                 logging.info("extraction")
                 subtitle_zipfile.extractall(path=self.localpath)
                 subtitle_zipfile.close()
                 os.remove(self.zipfile_path)
-            if os.path.exists(self.strDestSubPath):
-                os.remove(self.strDestSubPath)
             strRetrievedSubPath = self.localpath + "\\" + subtitle_zipfile.namelist()[0]
+            print strRetrievedSubPath
             os.rename(strRetrievedSubPath, self.strDestSubPath)
 
     def displaysubtitlelist(self):
