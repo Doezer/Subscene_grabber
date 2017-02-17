@@ -43,6 +43,7 @@ class Subscene:
         self.episodename = os.path.splitext(os.path.basename(path))[0]
         self.localpath = os.path.dirname(path)
         self.zipfile_path = os.path.splitext(path)[0] + '.zip'
+        self.strDestSubPath = self.localpath + "\\" + self.episodename + ".srt"
 
     def downloadfirstsub(self):
         sublist = self.getsubtitle(self.episodename)
@@ -59,9 +60,10 @@ class Subscene:
                 subtitle_zipfile.extractall(path=self.localpath)
                 subtitle_zipfile.close()
                 os.remove(self.zipfile_path)
-            if os.path.exists(self.localpath + "\\" + self.episodename + ".srt"):
-                os.remove(self.localpath + "\\" + self.episodename + ".srt")
-            os.rename(self.localpath + "\\" + subtitle_zipfile.namelist()[0], self.localpath + "\\" + self.episodename + ".srt")
+            if os.path.exists(self.strDestSubPath):
+                os.remove(self.strDestSubPath)
+            strRetrievedSubPath = self.localpath + "\\" + subtitle_zipfile.namelist()[0]
+            os.rename(strRetrievedSubPath, self.strDestSubPath)
 
     def displaysubtitlelist(self):
         sublist = self.getsubtitle(self.episodename)
