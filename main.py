@@ -1,3 +1,4 @@
+# coding=utf-8
 """
 Created on 7/9/16
 @author: Vincent AIRIAU
@@ -115,19 +116,19 @@ class Subscene:
         response = urllib2.urlopen(req)
         content = response.read()
         tree = html.fromstring(content)
-        logging.info(content)
+        # logging.info(content)
         subtitle_link = tree.xpath('//a[@id="downloadButton"]/@href')[0]
         subtitle_link = base_url + subtitle_link
-        logging.info(subtitle_link)
+        logging.info("Link to the subtitle is: " + subtitle_link)
         r = requests.get(subtitle_link, stream=True, headers={'User-Agent': user_agent})
         if r.status_code == 200:
             with open(localpath, 'wb') as f:
                 # r.raw.decode_content = True
                 shutil.copyfileobj(r.raw, f)
                 f.close()
-                logging.info("archive enregistree")
+                logging.info("archive enregistrée")
         else:
-            print "Subtitle couldn't be downloaded."
+            logging.error("Subtitle couldn't be downloaded.")
             return 1
         return 0
 
