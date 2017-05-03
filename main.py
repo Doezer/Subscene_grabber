@@ -39,7 +39,7 @@ def opensubscene_rls_page(showname):
 class Subscene:
 
     def __init__(self, path):
-        print "This is the path entered: " + path
+        print("This is the path entered: " + path)
         # Retrieve filename (for example TV.SHOW.XViD-EVO), so remove path and extension
         self.episodename = os.path.splitext(os.path.basename(path))[0]
         self.localpath = os.path.dirname(path)
@@ -51,7 +51,7 @@ class Subscene:
         # If no subtitles, display a NOK message
         if not sublist or sublist == 0:
             logging.error("No subtitles are available for this release.")
-            print "No subtitles are available for this release."
+            print("No subtitles are available for this release.")
         # If subtitles are present, download and unpack the first one
         else:
             self.getsubtitlefile(sublist, self.zipfile_path)
@@ -64,7 +64,7 @@ class Subscene:
                 subtitle_zipfile.close()
                 os.remove(self.zipfile_path)
             strRetrievedSubPath = self.localpath + "\\" + subtitle_zipfile.namelist()[0]
-            print strRetrievedSubPath
+            print (strRetrievedSubPath)
             os.rename(strRetrievedSubPath, self.strDestSubPath)
 
     def displaysubtitlelist(self):
@@ -72,11 +72,11 @@ class Subscene:
 
     @staticmethod
     def getsubtitle(episodename):
-        '''
+        """Get subtitle from episodename
 
         :param episodename: regex
         :return: sub_list_links: a table with subtitle URLs or 0 if no subtitle
-        '''
+        """
         # TODO: use regex to get the good or not take any
         tree = html.fromstring(opensubscene_rls_page(episodename))
         first_word = episodename.split(".",1)[0]
