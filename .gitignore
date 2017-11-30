@@ -64,12 +64,6 @@ subscene_kodi/
 
 
 Would skip repository Subscene-API/
-.idea/Git.iml
-.idea/Subscene_grabber.iml
-.idea/dictionaries/
-.idea/encodings.xml
-.idea/inspectionProfiles/
-.idea/misc.xml
-.idea/modules.xml
-.idea/workspace.xml
-/.idea/vcs.xml
+.idea/
+/debug_opensubscene_rls_page_content.txt
+/debug_getsubtitlefile_content.txt

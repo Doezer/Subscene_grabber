@@ -9,15 +9,12 @@ import logging
 import os
 import re
 import shutil
-import urllib
-import urllib2
+from urllib.parse import urlencode
 from zipfile import ZipFile
 
 import requests
+import sys
 from lxml import html
-
-logging.basicConfig(format='%(asctime)s - %(module)s: %(message)s', filename='subscene_g.log', filemode='w',
-                    level=logging.DEBUG)
 
 
 def opensubscene_rls_page(showname):
@@ -29,17 +26,21 @@ def opensubscene_rls_page(showname):
                    '__gads=ID=a9b6ddb36e78eb76:T=1473252861:S=ALNI_MYgAIy-JwZk3SaXGDbgRdjR6545wQ; _gat=1'
     user_agent = "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:47.0) Gecko/20100101 Firefox/47.0"
     headers = {'User-Agent': user_agent, 'Cookie': cookiefilter}
-    data = urllib.urlencode(values)
-    req = urllib2.Request(url, data, headers)
-    response = urllib2.urlopen(req)
-    content = response.read()
+    data = urlencode(values)
+    req = requests.get(url, params=data, headers=headers)
+    logging.debug("url : {}".format(url))
+    logging.debug("data : {}".format(data))
+    logging.debug("headers : {}".format(headers))
+    content = req.text
+    with open('debug_opensubscene_rls_page_content.txt', mode='w+', encoding='utf-8') as f:
+        f.write(content)
     return content
 
 
 class Subscene:
 
     def __init__(self, path):
-        print("This is the path entered: " + path)
+        logging.info("This is the path entered: " + path)
         # Retrieve filename (for example TV.SHOW.XViD-EVO), so remove path and extension
         self.episodename = os.path.splitext(os.path.basename(path))[0]
         self.localpath = os.path.dirname(path)
@@ -51,7 +52,6 @@ class Subscene:
         # If no subtitles, display a NOK message
         if not sublist or sublist == 0:
             logging.error("No subtitles are available for this release.")
-            print("No subtitles are available for this release.")
         # If subtitles are present, download and unpack the first one
         else:
             self.getsubtitlefile(sublist, self.zipfile_path)
@@ -63,9 +63,9 @@ class Subscene:
                 subtitle_zipfile.extractall(path=self.localpath)
                 subtitle_zipfile.close()
                 os.remove(self.zipfile_path)
-            strRetrievedSubPath = self.localpath + "\\" + subtitle_zipfile.namelist()[0]
-            print (strRetrievedSubPath)
-            os.rename(strRetrievedSubPath, self.strDestSubPath)
+            str_retrieved_sub_path = self.localpath + "\\" + subtitle_zipfile.namelist()[0]
+            print(str_retrieved_sub_path)
+            os.rename(str_retrieved_sub_path, self.strDestSubPath)
 
     def displaysubtitlelist(self):
         sublist = self.getsubtitle(self.episodename)
@@ -80,20 +80,28 @@ class Subscene:
         # TODO: use regex to get the good or not take any
         tree = html.fromstring(opensubscene_rls_page(episodename))
         first_word = episodename.split(".",1)[0]
+        episode_pattern = r'[sS]\d+[eE]\d+'
+        current_episode = re.compile(episode_pattern).findall(episodename)[0]
+        logging.debug('current_episode is {}'.format(current_episode))
+
         # sub_list_names = tree.xpath('//div[@id="content"]/div[2]/div/div/table/tbody/tr/td/a/span[2]/text()')
         i = 1
         sub_link = 0
 
+        # Browse every line of the html
         while 1:
-            sub_name = str(tree.xpath('//div[@class="content"]/table/tbody/tr[' + str(i) + ']/td[@class="a1"]/a/span[2]/text()[1]')[0]).strip()
-            # print "sub_name : " + sub_name
-            if sub_name == episodename:
-                sub_link = tree.xpath('//div[@class="content"]/table/tbody/tr[' + str(i) + ']/td[@class="a1"]/a/@href')[0]
-                # print "sub_list_links : " + sub_link
+            sub_name = tree.xpath('//div[@class="content"]/table/tbody/tr[' + str(i) + ']/td[@class="a1"]/a/span[2]/text()')[0].strip()
+            logging.debug("Current subtitle line name : " + sub_name)
+            logging.debug("The subtitle name we are searching for : {}".format(episodename))
+            if episodename.upper() is sub_name.upper():
+                logging.debug("Exact match found")
+                sub_link = tree.xpath('/div[@class="content"]/table/tbody/tr[' + str(i) + ']/td[@class="a1"]/a/@href')[0]
+                logging.debug("Relative URL for the selected subtile : " + sub_link)
                 break
-            elif re.compile(first_word).search(sub_name):
+            elif current_episode.upper() in sub_name.upper():
+                logging.debug("Inexact match found")
                 sub_link = tree.xpath('//div[@class="content"]/table/tbody/tr[' + str(i) + ']/td[@class="a1"]/a/@href')[0]
-                # print "sub_list_links : " + sub_link
+                logging.debug("Relative URL for the selected subtile : " + sub_link)
                 break
             elif not sub_name:
                 break
@@ -106,17 +114,20 @@ class Subscene:
 
     @staticmethod
     def getsubtitlefile(subtitlerelativeURL, localpath):
-
         base_url = 'https://subscene.com'
-        full_url = base_url + subtitlerelativeURL
-
+        url = base_url + subtitlerelativeURL
+        cookiefilter = '__cfduid=d9867ef87b10f433cd70a0efb36c01d471473252835; _ga=GA1.2.1129327024.1473252838; ' \
+                       'LanguageFilter=13; HearingImpaired=0; ForeignOnly=False; ' \
+                       '__gads=ID=a9b6ddb36e78eb76:T=1473252861:S=ALNI_MYgAIy-JwZk3SaXGDbgRdjR6545wQ; _gat=1'
         user_agent = "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:47.0) Gecko/20100101 Firefox/47.0"
         headers = {'User-Agent': user_agent}
-        req = urllib2.Request(full_url, '', headers)
-        response = urllib2.urlopen(req)
-        content = response.read()
+        req = requests.get(url, headers=headers)
+        logging.debug("url : {}".format(url))
+        logging.debug("headers : {}".format(headers))
+        content = req.text
+        with open('debug_getsubtitlefile_content.txt', mode='w+', encoding='utf-8') as f:
+            f.write(content)
         tree = html.fromstring(content)
-        # logging.info(content)
         subtitle_link = tree.xpath('//a[@id="downloadButton"]/@href')[0]
         subtitle_link = base_url + subtitle_link
         logging.info("Link to the subtitle is: " + subtitle_link)
@@ -140,8 +151,15 @@ def parseArguments():
     args = parser.parse_args()
     return args
 
+
 if __name__ == '__main__':
+
     args = parseArguments()
+    logging.basicConfig(
+        level=logging.DEBUG,
+        stream=sys.stdout,
+        format="%(asctime)s,%(msecs)03d %(levelname)-5.5s [%(name)s] %(message)s <%(lineno)d>",
+    )
     if args.l:
         Subscene(args.file).displaysubtitlelist()
     else:
