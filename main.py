@@ -14,6 +14,8 @@ from zipfile import ZipFile
 
 import requests
 import sys
+
+import time
 from lxml import html
 
 
@@ -27,6 +29,7 @@ def opensubscene_rls_page(showname):
     user_agent = "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:47.0) Gecko/20100101 Firefox/47.0"
     headers = {'User-Agent': user_agent, 'Cookie': cookiefilter}
     data = urlencode(values)
+    time.sleep(1)
     req = requests.get(url, params=data, headers=headers)
     logging.debug("url : {}".format(url))
     logging.debug("data : {}".format(data))
@@ -80,9 +83,13 @@ class Subscene:
         # TODO: use regex to get the good or not take any
         tree = html.fromstring(opensubscene_rls_page(episodename))
         first_word = episodename.split(".",1)[0]
-        episode_pattern = r'[sS]\d+[eE]\d+'
-        current_episode = re.compile(episode_pattern).findall(episodename)[0]
-        logging.debug('current_episode is {}'.format(current_episode))
+        try:
+            episode_pattern = r'[sS]\d+[eE]\d+'
+            current_episode = re.compile(episode_pattern).findall(episodename)[0]
+            logging.debug('current_episode is {}'.format(current_episode))
+        except:
+            logging.info("This is not a TV show")
+            current_episode = episodename
 
         # sub_list_names = tree.xpath('//div[@id="content"]/div[2]/div/div/table/tbody/tr/td/a/span[2]/text()')
         i = 1
@@ -121,6 +128,7 @@ class Subscene:
                        '__gads=ID=a9b6ddb36e78eb76:T=1473252861:S=ALNI_MYgAIy-JwZk3SaXGDbgRdjR6545wQ; _gat=1'
         user_agent = "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:47.0) Gecko/20100101 Firefox/47.0"
         headers = {'User-Agent': user_agent}
+        time.sleep(1)
         req = requests.get(url, headers=headers)
         logging.debug("url : {}".format(url))
         logging.debug("headers : {}".format(headers))
@@ -131,6 +139,7 @@ class Subscene:
         subtitle_link = tree.xpath('//a[@id="downloadButton"]/@href')[0]
         subtitle_link = base_url + subtitle_link
         logging.info("Link to the subtitle is: " + subtitle_link)
+        time.sleep(1)
         r = requests.get(subtitle_link, stream=True, headers={'User-Agent': user_agent})
         if r.status_code == 200:
             with open(localpath, 'wb') as f:
@@ -165,3 +174,4 @@ if __name__ == '__main__':
     else:
         grabber = Subscene(args.file)
         grabber.downloadfirstsub()
+    input("PRESS ENTER TO CONTINUE.")
