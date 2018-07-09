@@ -171,7 +171,7 @@ class Subscene(object):
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument("file", help="The path to the video file. Takes only avi, mpg and mkv files.")
+    parser.add_argument("file", help="The path to the video file.")
     parser.add_argument("-l", action="store_true",
                         help="Use to list all the available subtitles.")
     a = parser.parse_args()
