@@ -115,7 +115,7 @@ class Subscene(object):
                 break
             else:
                 i += 1
-                if not tree.xpath('//div[@class="content"]/table/tbody/tr[{i}]/td[@class="a1"]/a/span[2]/text()[1]'):
+                if not tree.xpath(f'//div[@class="content"]/table/tbody/tr[{i}]/td[@class="a1"]/a/span[2]/text()[1]'):
                     break
 
         return sub_link
