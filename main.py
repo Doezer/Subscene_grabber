@@ -33,14 +33,14 @@ class Subscene(object):
         self.zipfile_path = os.path.splitext(path)[0] + '.zip'  # Path to the zipfile
         self.strDestSubPath = self.localpath + "\\" + self.episodename + ".srt"  # Path to the subtitle file
 
-    def downloadfirstsub(self):
-        sublist = self.getsubtitle()
+    def run(self):
+        sublist = self.get_subtitle_link_from_name()
         # If no subtitles, display a NOK message
         if not sublist or sublist == 0:
             logging.error("No subtitles are available for this release.")
         # If subtitles are present, download and unpack the first one
         else:
-            self.getsubtitlefile(sublist)
+            self.get_subtitle_zipfile(sublist)
             # if the SRT file exists already, delete it
             if os.path.exists(self.strDestSubPath):
                 os.remove(self.strDestSubPath)
@@ -56,60 +56,61 @@ class Subscene(object):
             logging.info(f'Original subtitle: {str_retrieved_sub_path}')
             os.rename(str_retrieved_sub_path, self.strDestSubPath)
 
-    def displaysubtitlelist(self):
-        sublist = self.getsubtitle()
+    def display_subtitle_list(self):
+        sublist = self.get_subtitle_link_from_name()
         print(sublist)
 
-    def opensubscene_rls_page(self):
-        # Gets the search page content for one show or whatever the file of the name is=
+    def get_release_page_content(self):
+        """Get the html content of the search page.
+
+        :return: content
+        """
+        # Gets the search page content for one show or whatever the file of the name is
         url = 'https://subscene.com/subtitles/release'
         values = {'q': self.episodename, 'l': ''}
-
         headers = {'User-Agent': user_agent, 'Cookie': cookiefilter}
         data = urlencode(values)
-        time.sleep(1)
-        req = requests.get(url, params=data, headers=headers)
         logging.debug("url : {}".format(url))
         logging.debug("data : {}".format(data))
         logging.debug("headers : {}".format(headers))
+
+        time.sleep(1)
+        req = requests.get(url, params=data, headers=headers)
         content = req.text
-        with open('debug_opensubscene_rls_page_content.txt', mode='w+', encoding='utf-8') as f:
-            f.write(content)
+        # Write the content of the web page for debug purposes.
+        # with open('debug_opensubscene_rls_page_content.txt', mode='w+', encoding='utf-8') as f:
+        #     f.write(content)
         return content
 
-    def getsubtitle(self):
-        """Get subtitle from episodename
+    def get_subtitle_link_from_name(self):
+        """Search through the search page for the correct subtitle and retrieve its link
 
-        :return: sub_list_links: a table with subtitle URLs or 0 if no subtitle
+        :return: sub_link: subtitle URL or 0 if no subtitle
         """
-        # TODO: use regex to get the good or not take any
-        tree = html.fromstring(self.opensubscene_rls_page())
+        i = 1
+        sub_link = None
+        tree = html.fromstring(self.get_release_page_content())
 
         try:
             episode_pattern = r'[sS]\d+[eE]\d+'
             current_episode = re.compile(episode_pattern).findall(self.episodename)[0]
             logging.debug('current_episode is {}'.format(current_episode))
-        except:
+        except IndexError:
             logging.info("This is not a TV show")
             current_episode = self.episodename
 
-        i = 1
-        sub_link = 0
-
         # Browse every line of the html
         while 1:
-            sub_name = tree.xpath(f'//div[@class="content"]/table/tbody/tr[{i}]/td[@class="a1"]/a/span[2]/text()')[0].strip()
+            sub_name_xp = f'//div[@class="content"]/table/tbody/tr[{i}]/td[@class="a1"]/a/span[2]/text()'
+            sub_name = tree.xpath(sub_name_xp)[0].strip()
+            sub_link_xp = f'/div[@class="content"]/table/tbody/tr[{i}]/td[@class="a1"]/a/@href'
             logging.debug("Current subtitle line name : " + sub_name)
             logging.debug("The subtitle name we are searching for : {}".format(self.episodename))
             if self.episodename.upper() is sub_name.upper():
                 logging.debug("Exact match found")
-                sub_link = tree.xpath(f'/div[@class="content"]/table/tbody/tr[{i}]/td[@class="a1"]/a/@href')[0]
-                logging.debug(f"Relative URL for the selected subtile : {sub_link}")
                 break
             elif current_episode.upper() in sub_name.upper():
-                logging.debug("Inexact match found")
-                sub_link = tree.xpath(f'//div[@class="content"]/table/tbody/tr[{i}]/td[@class="a1"]/a/@href')[0]
-                logging.debug(f"Relative URL for the selected subtile : {sub_link}")
+                logging.warning("Inexact match found")
                 break
             elif not sub_name:
                 break
@@ -118,58 +119,76 @@ class Subscene(object):
                 if not tree.xpath(f'//div[@class="content"]/table/tbody/tr[{i}]/td[@class="a1"]/a/span[2]/text()[1]'):
                     break
 
+        sub_link = tree.xpath(sub_link_xp)[0]
+        logging.debug(f"Relative URL for the selected subtile : {sub_link}")
+
         return sub_link
 
-    def getsubtitlefile(self, subtitlerelativeURL):
+    def get_subtitle_zipfile(self, subtitle_relative_url):
+        """ Download the ZIP file for the given subtitle URL.
+
+        :param subtitle_relative_url: The Subscene relative URL, taken from the search page.
+        :return: 1 if no subtitle, 0 if OK
+        """
         localpath = self.zipfile_path
         base_url = 'https://subscene.com'
-        url = base_url + subtitlerelativeURL
-
+        subtitle_direct_link_xpath = '//a[@id="downloadButton"]/@href'
+        url = base_url + subtitle_relative_url
         headers = {'User-Agent': user_agent}
+
+        logging.debug(f"url : {url}")
+        logging.debug(f"headers : {headers}")
+
         time.sleep(1)
         req = requests.get(url, headers=headers)
-        logging.debug("url : {}".format(url))
-        logging.debug("headers : {}".format(headers))
+
         content = req.text
-        with open('debug_getsubtitlefile_content.txt', mode='w+', encoding='utf-8') as f:
-            f.write(content)
+        # Write the content of the web page for debug purposes.
+        # with open('debug_getsubtitlefile_content.txt', mode='w+', encoding='utf-8') as f:
+        #     f.write(content)
         tree = html.fromstring(content)
-        subtitle_link = tree.xpath('//a[@id="downloadButton"]/@href')[0]
+        subtitle_link = tree.xpath(subtitle_direct_link_xpath)[0]
         subtitle_link = base_url + subtitle_link
-        logging.info("Link to the subtitle is: " + subtitle_link)
-        time.sleep(1)
-        r = requests.get(subtitle_link, stream=True, headers={'User-Agent': user_agent})
+
+        logging.debug(f"Link to the subtitle is {subtitle_link}.")
+
+        time.sleep(1)  # Rough rate limiting
+        r = requests.get(subtitle_link,
+                         stream=True,
+                         headers={'User-Agent': user_agent})
+
+        # If the link is good, download the file
         if r.status_code == 200:
             with open(localpath, 'wb') as f:
-                # r.raw.decode_content = True
                 shutil.copyfileobj(r.raw, f)
                 f.close()
-                logging.info("Archive recorded")
+                logging.info(f"Archive downloaded at {localpath}.")
         else:
             logging.error("Subtitle couldn't be downloaded.")
             return 1
         return 0
 
 
-def parseArguments():
+def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("file", help="The path to the video file. Takes only avi, mpg and mkv files.")
-    parser.add_argument("-l", action="store_true", help="Use to list all the available subtitles and take the one you want.")
-    args = parser.parse_args()
-    return args
+    parser.add_argument("-l", action="store_true",
+                        help="Use to list all the available subtitles.")
+    a = parser.parse_args()
+    return a
 
 
 if __name__ == '__main__':
 
-    args = parseArguments()
+    args = parse_arguments()
     logging.basicConfig(
         level=logging.DEBUG,
         stream=sys.stdout,
         format="%(asctime)s,%(msecs)03d %(levelname)-5.5s [%(name)s] %(message)s <%(lineno)d>",
     )
     if args.l:
-        Subscene(args.file).displaysubtitlelist()
+        Subscene(args.file).display_subtitle_list()
     else:
         grabber = Subscene(args.file)
-        grabber.downloadfirstsub()
+        grabber.run()
     input("PRESS ENTER TO CONTINUE.")
